@@ -83,6 +83,7 @@ func (c *RestClient) RawQuery(urlWithoutVersion string, params map[string]string
 			q.Add(k, v)
 		}
 	}
+	req.Header.Set("user-agent", "go-aptos-sdk")
 	resp, err := c.c.Do(req)
 	if err != nil {
 		return
@@ -119,6 +120,7 @@ func (c *RestClient) doReq(req *http.Request, result interface{}) error {
 }
 
 func doReqWithClient(req *http.Request, result interface{}, client *http.Client) error {
+	req.Header.Set("user-agent", "go-aptos-sdk")
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
