@@ -1,9 +1,12 @@
 package aptosclient
 
 import (
+	"encoding/json"
+	"fmt"
 	"math/big"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/coming-chat/go-aptos/aptostypes"
 )
@@ -117,5 +120,32 @@ func (c *RestClient) BalanceOf(address string, coinTag string) (balance *big.Int
 	if !ok {
 		return big.NewInt(0), nil
 	}
+	return
+}
+
+func (c *RestClient) GetAccountBalance(address string, coinTag string, version uint64) (balance *big.Int, err error) {
+	req, err := http.NewRequest("GET", c.GetVersionedRpcUrl()+"/accounts/"+address+"/balance/"+coinTag, nil)
+	if err != nil {
+		return
+	}
+	if version > 0 {
+		q := req.URL.Query()
+		q.Add("ledger_version", strconv.FormatUint(version, 10))
+		req.URL.RawQuery = q.Encode()
+	}
+	balance = big.NewInt(0)
+	res := json.RawMessage{}
+	err = c.doReq(req, &res)
+	if err != nil {
+		return balance, err
+	}
+	resStr := string(res)
+	resStr = strings.Trim(resStr, "\"")
+
+	_, ok := balance.SetString(resStr, 10)
+	if !ok {
+		return balance, fmt.Errorf("failed to parse int from '%s'", resStr)
+	}
+
 	return
 }
